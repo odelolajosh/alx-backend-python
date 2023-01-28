@@ -2,6 +2,7 @@
 """ Test utils module. """
 from utils import *
 from parameterized import parameterized
+from unittest.mock import patch, Mock
 import unittest
 
 
@@ -26,3 +27,26 @@ class TestAccessNestedMap(unittest.TestCase):
         with self.assertRaises(KeyError) as e:
             access_nested_map(nested_map, path)
         self.assertEqual(str(e.exception), expected)
+
+
+class TestGetJson(unittest.TestCase):
+    """ Test get_json function. """
+
+    @parameterized.expand([
+        ("http://example.com", {"payload": True}),
+        ("http://holberton.io", {"payload": False})
+    ])
+    @patch("requests.get")
+    def test_get_json(self, test_url, test_payload, mock_get):
+        """ Test get_json function. """
+        mock_get.return_value.json.return_value = test_payload
+        self.assertEqual(get_json(test_url), test_payload)
+        mock_get.assert_called_once_with(test_url)
+
+    @patch("requests.get")
+    def test_get_json_exception(self, mock_get):
+        """ Test get_json function exception. """
+        mock_get.side_effect = Exception("Not found")
+        with self.assertRaises(Exception) as e:
+            get_json("http://example.com")
+        self.assertEqual(str(e.exception), "Not found")
