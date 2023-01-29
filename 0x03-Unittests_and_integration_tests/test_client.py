@@ -2,8 +2,10 @@
 """ Test Client module. """
 from client import GithubOrgClient
 from unittest.mock import patch, Mock, PropertyMock
-from parameterized import parameterized
+from parameterized import parameterized, parameterized_class
+from requests import HTTPError
 import unittest
+import fixtures
 
 
 class TestGithubOrgClient(unittest.TestCase):
@@ -57,3 +59,37 @@ class TestGithubOrgClient(unittest.TestCase):
         """ Test has license """
         self.assertEqual(GithubOrgClient.has_license(
             repo, license_key), expected)
+
+
+@parameterized_class([{
+    "org_payload": fixture[0],
+    "repos_payload": fixture[1],
+    "expected_repos": fixture[2],
+    "apache2_repos": fixture[3],
+} for fixture in fixtures.TEST_PAYLOAD])
+class TestIntegrationGithubOrgClient(unittest.TestCase):
+    """ Test Integration GithubOrgClient """
+    @classmethod
+    def setUpClass(cls):
+        """ Set up class """
+        config = {"json.return_value": cls.org_payload}
+        cls.get_patcher = patch("requests.get", **config)
+        cls.mock_get = cls.get_patcher.start()
+
+        url_mapper = {
+            "https://api.github.com/orgs/google": cls.org_payload,
+            "https://api.github.com/orgs/google/repos": cls.repos_payload
+        }
+
+        def get_json(url):
+            """ Mock implementation of get_json """
+            return url_mapper.get(url, HTTPError)
+
+        cls.get_json_patcher = patch("client.get_json", side_effect=get_json)
+        cls.mock_get_json = cls.get_json_patcher.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        """ Tear down class """
+        cls.get_patcher.stop()
+        cls.get_json_patcher.stop()
