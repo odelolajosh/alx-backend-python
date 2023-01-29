@@ -93,3 +93,14 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         """ Tear down class """
         cls.get_patcher.stop()
         cls.get_json_patcher.stop()
+
+    def test_public_repos(self):
+        """ Test public repos """
+        client = GithubOrgClient("google")
+        self.assertEqual(client.public_repos(), self.expected_repos)
+
+    def test_public_repos_with_license(self):
+        """ Test public repos with license """
+        client = GithubOrgClient("google")
+        self.assertEqual(client.public_repos("apache-2.0"),
+                         self.apache2_repos)
