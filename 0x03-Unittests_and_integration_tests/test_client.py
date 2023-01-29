@@ -37,6 +37,7 @@ class TestGithubOrgClient(unittest.TestCase):
 
     @patch("client.get_json")
     def test_public_repos(self, get_json_mock: Mock):
+        """ Test public repos """
         expected = ["alx-backend", "alx-backend-python"]
         get_json_mock.return_value = [{"name": repo} for repo in expected]
         with patch("client.GithubOrgClient._public_repos_url",
